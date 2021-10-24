@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+  twitter_api_app:
+    image: twitter_api_app
+    volumes:
+      - ./twitter_api_app:/streaming_app/twitter_api_app
+      - ./twitter_api_app_on_startup.sh:/streaming_app/twitter_api_app_on_startup.sh
+    command: /bin/bash twitter_api_app_on_startup.sh
