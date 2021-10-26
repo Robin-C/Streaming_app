@@ -2,7 +2,6 @@ from time import time
 import tweepy
 import os
 import json
-import csv
 import re
 from pytz import timezone
 from datetime import datetime
@@ -47,17 +46,11 @@ def isWestern(tweet):
 def parse_json(json_object):
     parsed_object = {
       'created_at': created_at(json_object['created_at']),
-      'tweet': re.findall(r"#(\w+)", json_object['text'].rstrip())
+      'tweet': ' '.join(re.findall(r"#(\w+)", json_object['text'].rstrip()))
     }
     if len(parsed_object['tweet']) > 0 and isWestern(json_object['text'].rstrip()):
       tweet.append(parsed_object)
       producer.send('hashtags', parsed_object)
-      a_file = open("tweets.csv", "w")
-      dict_writer = csv.DictWriter(a_file, field_names)
-      dict_writer.writeheader()
-      dict_writer.writerows(tweet)
-      a_file.close()
-
 
 class IDPrinter(tweepy.Stream):
 
