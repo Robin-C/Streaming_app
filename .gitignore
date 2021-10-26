@@ -1,1 +1,4 @@
 ignore/
+.env
+kafka_data/
+zookepper_data/

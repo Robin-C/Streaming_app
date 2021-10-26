@@ -1,0 +1,39 @@
+version: "2"
+
+services:
+  zookeeper:
+    user: root
+    image: docker.io/bitnami/zookeeper:3.7
+    ports:
+      - "2181:2181"
+    volumes:
+      - ./zookeeper_data:/bitnami
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    hostname: zookeeper
+  kafka:
+    user: root
+    image: docker.io/bitnami/kafka:3
+    ports:
+      - "9092:9092"
+    volumes:
+      - ./kafka_data:/bitnami
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+    hostname: kafka
+  twitter_api_app:
+    image: twitter_api_app
+    environment:
+      - ACCESS_TOKEN=$ACCESS_TOKEN
+      - ACCESS_TOKEN_SECRET=$ACCESS_TOKEN_SECRET
+      - CONSUMMER_TOKEN=$CONSUMMER_TOKEN
+      - CONSUMMER_TOKEN_SECRET=$CONSUMMER_TOKEN_SECRET
+      
+    volumes:
+      - ./twitter_api_app:/streaming_app/twitter_api_app
+      - ./twitter_api_app_on_startup.sh:/streaming_app/twitter_api_app_on_startup.sh
+    command: /bin/bash twitter_api_app_on_startup.sh      
+
