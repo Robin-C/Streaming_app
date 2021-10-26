@@ -32,6 +32,7 @@ producer = KafkaProducer(bootstrap_servers='kafka:9092', value_serializer=lambda
 def created_at(string_datetime):
   dt_object = datetime.strptime(string_datetime, '%a %b %d %H:%M:%S +0000 %Y')
   utc_created_at = utc.localize(dt_object)
+ # print(str(utc_created_at.astimezone(paris_tz)))
   return str(utc_created_at.astimezone(paris_tz))
 
 def isWestern(tweet):
@@ -46,7 +47,7 @@ def isWestern(tweet):
 def parse_json(json_object):
     parsed_object = {
       'created_at': created_at(json_object['created_at']),
-      'tweet': ' '.join(re.findall(r"#(\w+)", json_object['text'].rstrip()))
+      'tweet': re.findall(r"#(\w+)", json_object['text'].rstrip())
     }
     if len(parsed_object['tweet']) > 0 and isWestern(json_object['text'].rstrip()):
       tweet.append(parsed_object)
