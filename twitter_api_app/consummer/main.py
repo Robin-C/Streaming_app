@@ -8,14 +8,15 @@ cursor = connection.cursor()
 
 
 
-consumer = KafkaConsumer('hashtags', bootstrap_servers='kafka:9092')
+consumer = KafkaConsumer('fact_tweets', bootstrap_servers='kafka:9092')
 for tweet in consumer:
   deserialized = json.loads(tweet.value)
-  # insert a new row for each occurence of a hashtag (delimited by a space)
-  for i in deserialized['tweet']:
-    cursor.execute("INSERT INTO fact_hashtags (created_at, hashtag) VALUES(%s, %s)", (deserialized['created_at'], i))
+  print(deserialized['created_at'])
+  # insert occurence into postgres
+  cursor.execute("INSERT INTO fact_tweets (created_at, tweet) VALUES(%s, %s)", (deserialized['created_at'], deserialized['tweet']))
   # delete records older than 30 minutes
-  cursor.execute("delete from fact_hashtags where NOW() at time zone 'Europe/Paris' - interval '30 minutes' > created_at")
+  cursor.execute("delete from fact_tweets where NOW() at time zone 'Europe/Paris' - interval '30 minutes' > created_at")
   connection.commit()
-  
+
+
 

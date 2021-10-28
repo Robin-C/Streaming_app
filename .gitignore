@@ -3,3 +3,4 @@ ignore/
 kafka_data/
 zookepper_data/
 pgadmin/
+postgres_data/

@@ -16,10 +16,6 @@ authenticator = tweepy.OAuthHandler(api_key, api_key_secret)
 authenticator.set_access_token(access_token, access_token_secret)
 api = tweepy.API(authenticator, wait_on_rate_limit=True)
 
-# csv
-field_names = ['created_at','tweet']
-tweet = []
-
 # timezone converter
 paris_tz = timezone('Europe/Paris')
 utc = timezone('UTC')
@@ -28,30 +24,20 @@ utc = timezone('UTC')
 producer = KafkaProducer(bootstrap_servers='kafka:9092', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
   
 # helpers
- 
 def created_at(string_datetime):
   dt_object = datetime.strptime(string_datetime, '%a %b %d %H:%M:%S +0000 %Y')
   utc_created_at = utc.localize(dt_object)
  # print(str(utc_created_at.astimezone(paris_tz)))
   return str(utc_created_at.astimezone(paris_tz))
 
-def isWestern(tweet):
-    try:
-        tweet.encode(encoding='utf-8').decode('ascii')
-    except UnicodeDecodeError:
-        return False
-    else:
-        return True
-
 # parse and save to csv
-def parse_json(json_object):
+def parse_json(timestamp, candidate):
     parsed_object = {
-      'created_at': created_at(json_object['created_at']),
-      'tweet': re.findall(r"#(\w+)", json_object['text'].rstrip())
+      'created_at': created_at(timestamp),
+      'tweet': candidate
     }
-    if len(parsed_object['tweet']) > 0 and isWestern(json_object['text'].rstrip()):
-      tweet.append(parsed_object)
-      producer.send('hashtags', parsed_object)
+    if len(parsed_object['tweet']) > 0:
+      producer.send('fact_tweets', parsed_object)
 
 class IDPrinter(tweepy.Stream):
 
@@ -59,10 +45,16 @@ class IDPrinter(tweepy.Stream):
         print(status.id)
     def on_data(self, data):
          json_obj = json.loads(data.decode('utf-8'))
-         if 'text' in json_obj:
-           parse_json(json_obj)
-      
-
+         if 'text' in json_obj and json_obj['text'].find('macron') != -1:
+           parse_json(json_obj['created_at'], 'macron')
+         if 'text' in json_obj and json_obj['text'].find('zemmour') != -1:
+           parse_json(json_obj['created_at'], 'zemmour')
+         if 'text' in json_obj and json_obj['text'].find('le pen') != -1:
+           parse_json(json_obj['created_at'], 'le pen')
+         if 'text' in json_obj and json_obj['text'].find('melenchon') != -1:
+           parse_json(json_obj['created_at'], 'melenchon')
+         if 'text' in json_obj and json_obj['text'].find('asselineau') != -1:
+           parse_json(json_obj['created_at'], 'asselineau')   
 
 printer = IDPrinter(
   api_key, api_key_secret,
@@ -70,4 +62,4 @@ printer = IDPrinter(
 )
 #printer.filter(locations=[-52,2,9,51]) # France
 
-printer.sample()
+printer.filter(track=['macron', 'zemmour', 'le pen', 'melenchon', 'asselineau'])
