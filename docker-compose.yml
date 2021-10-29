@@ -73,3 +73,14 @@ services:
       - postgres
     ports: 
       - '8088:8088'
+    volumes:
+      - ./superset_on_startup.sh:/app/superset_on_startup.sh
+
+  dash_app:
+    image: dash_app
+    volumes:
+      - ./dash_app:/streaming_app/dash_app
+      - ./dash_app_on_startup.sh:/dash_app_on_startup.sh
+    ports:
+      - "8050:8050"
+    command: /bin/bash /dash_app_on_startup.sh

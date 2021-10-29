@@ -20,6 +20,18 @@ api = tweepy.API(authenticator, wait_on_rate_limit=True)
 paris_tz = timezone('Europe/Paris')
 utc = timezone('UTC')
  
+# world leaders
+macron = ['macron']
+biden = ['biden', 'potus', 'Potus']
+bolsonaro = ['bolsonaro']
+merckel = ['merckel']
+jinping = ['jinping', 'xi jinping', '习近平']
+poutine = ['putin', 'poutine', 'Владимир Путин']
+ 
+# tweeter topics
+topics = ['macron', 'Macron', 'biden', 'Biden', 'bolsonaro', 'Bolsonaro', 'merkel', 'Merkel', 'jinping', 'Jinping', '习近平',
+'poutine, Poutine', 'Putin', 'putin', 'Владимир Путин']
+
 # kafka producer
 producer = KafkaProducer(bootstrap_servers='kafka:9092', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
   
@@ -27,39 +39,45 @@ producer = KafkaProducer(bootstrap_servers='kafka:9092', value_serializer=lambda
 def created_at(string_datetime):
   dt_object = datetime.strptime(string_datetime, '%a %b %d %H:%M:%S +0000 %Y')
   utc_created_at = utc.localize(dt_object)
- # print(str(utc_created_at.astimezone(paris_tz)))
   return str(utc_created_at.astimezone(paris_tz))
 
-# parse and save to csv
+def find_leader(str_list, tweet):
+    for string_to_test in str_list:
+        if tweet.find(string_to_test) != -1:
+            return True
+    return False
+
+# parse tweet and produce to kafka
 def parse_json(timestamp, candidate):
     parsed_object = {
       'created_at': created_at(timestamp),
       'tweet': candidate
     }
     if len(parsed_object['tweet']) > 0:
-      producer.send('fact_tweets', parsed_object)
+      producer.send('fact_tweets', parsed_object)    
 
 class IDPrinter(tweepy.Stream):
-
     def on_status(self, status):
         print(status.id)
     def on_data(self, data):
          json_obj = json.loads(data.decode('utf-8'))
-         if 'text' in json_obj and json_obj['text'].find('macron') != -1:
-           parse_json(json_obj['created_at'], 'macron')
-         if 'text' in json_obj and json_obj['text'].find('zemmour') != -1:
-           parse_json(json_obj['created_at'], 'zemmour')
-         if 'text' in json_obj and json_obj['text'].find('le pen') != -1:
-           parse_json(json_obj['created_at'], 'le pen')
-         if 'text' in json_obj and json_obj['text'].find('melenchon') != -1:
-           parse_json(json_obj['created_at'], 'melenchon')
-         if 'text' in json_obj and json_obj['text'].find('asselineau') != -1:
-           parse_json(json_obj['created_at'], 'asselineau')   
+         if 'text' in json_obj:
+           if find_leader(macron, json_obj['text']):
+              parse_json(json_obj['created_at'], 'Macron')
+           if find_leader(biden, json_obj['text']):
+              parse_json(json_obj['created_at'], 'Biden')
+           if find_leader(bolsonaro, json_obj['text']):
+              parse_json(json_obj['created_at'], 'Bolsonaro')                   
+           if find_leader(merckel, json_obj['text']):
+              parse_json(json_obj['created_at'], 'Merckel')
+           if find_leader(jinping, json_obj['text']):
+              parse_json(json_obj['created_at'], 'Jinping')
+           if find_leader(poutine, json_obj['text']):
+              parse_json(json_obj['created_at'], 'Putin')
 
 printer = IDPrinter(
   api_key, api_key_secret,
   access_token, access_token_secret
 )
-#printer.filter(locations=[-52,2,9,51]) # France
 
-printer.filter(track=['macron', 'zemmour', 'le pen', 'melenchon', 'asselineau'])
+printer.filter(track=topics)
