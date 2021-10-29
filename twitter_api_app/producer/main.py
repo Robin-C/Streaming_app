@@ -22,9 +22,9 @@ utc = timezone('UTC')
  
 # world leaders
 macron = ['macron']
-biden = ['biden', 'potus', 'Potus']
+biden = ['biden', 'potus']
 bolsonaro = ['bolsonaro']
-merckel = ['merckel']
+merkel = ['merkel']
 jinping = ['jinping', 'xi jinping', '习近平']
 poutine = ['putin', 'poutine', 'Владимир Путин']
  
@@ -43,7 +43,7 @@ def created_at(string_datetime):
 
 def find_leader(str_list, tweet):
     for string_to_test in str_list:
-        if tweet.find(string_to_test) != -1:
+        if tweet.lower().find(string_to_test) != -1:
             return True
     return False
 
@@ -68,8 +68,8 @@ class IDPrinter(tweepy.Stream):
               parse_json(json_obj['created_at'], 'Biden')
            if find_leader(bolsonaro, json_obj['text']):
               parse_json(json_obj['created_at'], 'Bolsonaro')                   
-           if find_leader(merckel, json_obj['text']):
-              parse_json(json_obj['created_at'], 'Merckel')
+           if find_leader(merkel, json_obj['text']):
+              parse_json(json_obj['created_at'], 'Merkel')
            if find_leader(jinping, json_obj['text']):
               parse_json(json_obj['created_at'], 'Jinping')
            if find_leader(poutine, json_obj['text']):
